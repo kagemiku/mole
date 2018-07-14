@@ -12,13 +12,13 @@ type Mole struct {
 	cmds     []*exec.Cmd
 	Stdin    io.Reader
 	Stdout   io.Writer
-	finished bool
+	executed bool
 }
 
 func NewMole() *Mole {
 	return &Mole{
 		cmds:     []*exec.Cmd{},
-		finished: false,
+		executed: false,
 	}
 }
 
@@ -27,7 +27,7 @@ func (this *Mole) Add(name string, arg ...string) {
 	this.cmds = append(this.cmds, cmd)
 }
 
-func (this Mole) Run() error {
+func (this *Mole) Run() error {
 	return this.exec()
 }
 
@@ -66,13 +66,16 @@ func (this *Mole) exec1() error {
 }
 
 func (this *Mole) exec() error {
-	if this.finished {
-		return errors.New("mole: already started")
-	}
-
 	if len(this.cmds) == 0 {
 		return errors.New("mole: no commands are set")
 	}
+
+	if this.executed {
+		return errors.New("mole: already started")
+	}
+	defer func(this *Mole) {
+		this.executed = true
+	}(this)
 
 	if len(this.cmds) == 1 {
 		log.Println("exec1")
