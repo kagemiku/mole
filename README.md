@@ -4,6 +4,12 @@
 mole is a wrapper of **exec.Cmd** suite for executing piped commands.
 
 # Usage
+```go
+import "github.com/kagemiku/mole"
+
+mole := mole.NewMole()
+```
+
 * **Mole.Output()**
 ```go
 mole := mole.NewMole()
