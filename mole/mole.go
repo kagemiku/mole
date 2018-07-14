@@ -3,7 +3,6 @@ package mole
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os/exec"
@@ -28,26 +27,56 @@ func (this *Mole) Add(name string, arg ...string) {
 	this.cmds = append(this.cmds, cmd)
 }
 
-func (this Mole) Start() error {
+func (this Mole) Run() error {
+	return this.exec()
+}
+
+func (this *Mole) Output() ([]byte, error) {
+	if this.Stdout != nil {
+		return nil, errors.New("mole: Stdout already set")
+	}
+
+	var buf bytes.Buffer
+	this.Stdout = &buf
+
 	err := this.exec()
 	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func (this *Mole) exec1() error {
+	cmd := this.cmds[0]
+	cmd.Stdin = this.Stdin
+	cmd.Stdout = this.Stdout
+
+	if err := cmd.Start(); err != nil {
+		log.Println("Failed to start first cmd")
+		return err
+	}
+
+	if err := cmd.Wait(); err != nil {
+		log.Println("Failed to wait first cmd")
 		return err
 	}
 
 	return nil
 }
 
-func (this Mole) Output() ([]byte, error) {
-	return this.cmds[0].Output()
-}
+func (this *Mole) exec() error {
+	if this.finished {
+		return errors.New("mole: already started")
+	}
 
-func (this Mole) Debug() {
-	fmt.Printf("Length: %d\n", len(this.cmds))
-}
+	if len(this.cmds) == 0 {
+		return errors.New("mole: no commands are set")
+	}
 
-func (this Mole) exec() error {
-	if len(this.cmds) < 3 {
-		return errors.New("len < 3")
+	if len(this.cmds) == 1 {
+		log.Println("exec1")
+		return this.exec1()
 	}
 
 	var buf bytes.Buffer
@@ -97,6 +126,7 @@ func (this Mole) exec() error {
 		log.Println("Failed to wait last cmd")
 		return err
 	}
+	this.finished = true
 
 	return nil
 }
