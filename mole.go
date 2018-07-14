@@ -14,6 +14,7 @@ type Mole struct {
 	executed bool
 }
 
+// NewMole generates a new Mole instance
 func NewMole() *Mole {
 	return &Mole{
 		cmds:     []*exec.Cmd{},
@@ -21,15 +22,20 @@ func NewMole() *Mole {
 	}
 }
 
+// Add adds command to command list
 func (this *Mole) Add(name string, arg ...string) {
 	cmd := exec.Command(name, arg...)
 	this.cmds = append(this.cmds, cmd)
 }
 
+// Run runs command list
+//
+// If you want to get the stdout content, please use Output instead, or pass some io.Writer instance to the Mole.Stdout
 func (this *Mole) Run() error {
 	return this.exec()
 }
 
+// Output runs command list, and returns stdout content as []byte
 func (this *Mole) Output() ([]byte, error) {
 	if this.Stdout != nil {
 		return nil, errors.New("mole: Stdout already set")
@@ -46,6 +52,7 @@ func (this *Mole) Output() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// exec1 executes command. This method is only used when command list length is 1.
 func (this *Mole) exec1() error {
 	cmd := this.cmds[0]
 	cmd.Stdin = this.Stdin
@@ -58,6 +65,7 @@ func (this *Mole) exec1() error {
 	return cmd.Wait()
 }
 
+// exec executes commands.
 func (this *Mole) exec() error {
 	if len(this.cmds) == 0 {
 		return errors.New("mole: no commands are set")
