@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"log"
 	"os/exec"
 )
 
@@ -53,16 +52,10 @@ func (this *Mole) exec1() error {
 	cmd.Stdout = this.Stdout
 
 	if err := cmd.Start(); err != nil {
-		log.Println("Failed to start first cmd")
 		return err
 	}
 
-	if err := cmd.Wait(); err != nil {
-		log.Println("Failed to wait first cmd")
-		return err
-	}
-
-	return nil
+	return cmd.Wait()
 }
 
 func (this *Mole) exec() error {
@@ -78,7 +71,6 @@ func (this *Mole) exec() error {
 	}(this)
 
 	if len(this.cmds) == 1 {
-		log.Println("exec1")
 		return this.exec1()
 	}
 
@@ -88,12 +80,10 @@ func (this *Mole) exec() error {
 	firstCmd.Stdout = &buf
 
 	if err := firstCmd.Start(); err != nil {
-		log.Println("Failed to start first cmd")
 		return err
 	}
 
 	if err := firstCmd.Wait(); err != nil {
-		log.Println("Failed to wait first cmd")
 		return err
 	}
 
@@ -106,12 +96,10 @@ func (this *Mole) exec() error {
 		cmd.Stdout = &buf
 
 		if err := cmd.Start(); err != nil {
-			log.Println("Failed to start cmd")
 			return err
 		}
 
 		if err := cmd.Wait(); err != nil {
-			log.Println("Failed to wait cmd")
 			return err
 		}
 	}
@@ -121,15 +109,8 @@ func (this *Mole) exec() error {
 	lastCmd.Stdout = this.Stdout
 
 	if err := lastCmd.Start(); err != nil {
-		log.Println("Failed to start last cmd")
 		return err
 	}
 
-	if err := lastCmd.Wait(); err != nil {
-		log.Println("Failed to wait last cmd")
-		return err
-	}
-	this.finished = true
-
-	return nil
+	return lastCmd.Wait()
 }
