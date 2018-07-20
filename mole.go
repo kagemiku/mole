@@ -7,6 +7,7 @@ import (
 	"os/exec"
 )
 
+// Mole is a structure for running piped command
 type Mole struct {
 	cmds     []*exec.Cmd
 	Stdin    io.Reader
@@ -23,28 +24,28 @@ func NewMole() *Mole {
 }
 
 // Add adds command to command list
-func (this *Mole) Add(name string, arg ...string) {
+func (m *Mole) Add(name string, arg ...string) {
 	cmd := exec.Command(name, arg...)
-	this.cmds = append(this.cmds, cmd)
+	m.cmds = append(m.cmds, cmd)
 }
 
 // Run runs command list
 //
 // If you want to get the stdout content, please use Output instead, or pass some io.Writer instance to the Mole.Stdout
-func (this *Mole) Run() error {
-	return this.exec()
+func (m *Mole) Run() error {
+	return m.exec()
 }
 
 // Output runs command list, and returns stdout content as []byte
-func (this *Mole) Output() ([]byte, error) {
-	if this.Stdout != nil {
+func (m *Mole) Output() ([]byte, error) {
+	if m.Stdout != nil {
 		return nil, errors.New("mole: Stdout already set")
 	}
 
 	var buf bytes.Buffer
-	this.Stdout = &buf
+	m.Stdout = &buf
 
-	err := this.exec()
+	err := m.exec()
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +54,10 @@ func (this *Mole) Output() ([]byte, error) {
 }
 
 // exec1 executes command. This method is only used when command list length is 1.
-func (this *Mole) exec1() error {
-	cmd := this.cmds[0]
-	cmd.Stdin = this.Stdin
-	cmd.Stdout = this.Stdout
+func (m *Mole) exec1() error {
+	cmd := m.cmds[0]
+	cmd.Stdin = m.Stdin
+	cmd.Stdout = m.Stdout
 
 	if err := cmd.Start(); err != nil {
 		return err
@@ -66,25 +67,25 @@ func (this *Mole) exec1() error {
 }
 
 // exec executes commands.
-func (this *Mole) exec() error {
-	if len(this.cmds) == 0 {
+func (m *Mole) exec() error {
+	if len(m.cmds) == 0 {
 		return errors.New("mole: no commands are set")
 	}
 
-	if this.executed {
+	if m.executed {
 		return errors.New("mole: already started")
 	}
-	defer func(this *Mole) {
-		this.executed = true
-	}(this)
+	defer func(m *Mole) {
+		m.executed = true
+	}(m)
 
-	if len(this.cmds) == 1 {
-		return this.exec1()
+	if len(m.cmds) == 1 {
+		return m.exec1()
 	}
 
 	var buf bytes.Buffer
-	firstCmd := this.cmds[0]
-	firstCmd.Stdin = this.Stdin
+	firstCmd := m.cmds[0]
+	firstCmd.Stdin = m.Stdin
 	firstCmd.Stdout = &buf
 
 	if err := firstCmd.Start(); err != nil {
@@ -95,10 +96,13 @@ func (this *Mole) exec() error {
 		return err
 	}
 
-	lastIdx := len(this.cmds) - 1
-	for _, cmd := range this.cmds[1:lastIdx] {
+	lastIdx := len(m.cmds) - 1
+	for _, cmd := range m.cmds[1:lastIdx] {
 		var bufcp bytes.Buffer
-		io.Copy(&bufcp, &buf)
+		_, err := io.Copy(&bufcp, &buf)
+		if err != nil {
+			return err
+		}
 
 		cmd.Stdin = &bufcp
 		cmd.Stdout = &buf
@@ -112,9 +116,9 @@ func (this *Mole) exec() error {
 		}
 	}
 
-	lastCmd := this.cmds[lastIdx]
+	lastCmd := m.cmds[lastIdx]
 	lastCmd.Stdin = &buf
-	lastCmd.Stdout = this.Stdout
+	lastCmd.Stdout = m.Stdout
 
 	if err := lastCmd.Start(); err != nil {
 		return err
