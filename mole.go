@@ -7,6 +7,7 @@ import (
 	"os/exec"
 )
 
+// Mole is a structure for running piped command
 type Mole struct {
 	cmds     []*exec.Cmd
 	Stdin    io.Reader
