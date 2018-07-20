@@ -99,7 +99,10 @@ func (this *Mole) exec() error {
 	lastIdx := len(this.cmds) - 1
 	for _, cmd := range this.cmds[1:lastIdx] {
 		var bufcp bytes.Buffer
-		io.Copy(&bufcp, &buf)
+		_, err := io.Copy(&bufcp, &buf)
+		if err != nil {
+			return err
+		}
 
 		cmd.Stdin = &bufcp
 		cmd.Stdout = &buf
