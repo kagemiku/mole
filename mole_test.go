@@ -32,7 +32,7 @@ func TestSingleOutput(t *testing.T) {
 	}
 	log.Println(string(out))
 
-	out, err = mole.Output()
+	_, err = mole.Output()
 	if err == nil {
 		t.Fatal("It should be occur error when Output is called multiple times")
 	}
@@ -67,7 +67,7 @@ func TestMultipleOutput(t *testing.T) {
 	}
 	log.Println(string(out))
 
-	out, err = mole.Output()
+	_, err = mole.Output()
 	if err == nil {
 		t.Fatal("It should be occur error when Output is called multiple times")
 	}
